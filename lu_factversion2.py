@@ -24,13 +24,14 @@ def lu_factorisation(A):
     U : numpy.ndarray
         An upper triangular matrix with shape ``(n, n)``.
     """
-    np.asarray(A)
+    #np.asarray(A)
     n, m = A.shape
     if n != m:
         raise ValueError(f"Matrix A is not square {A.shape=}")
 
     # construct arrays of zeros
     L, U = np.zeros_like(A), np.zeros_like(A)
+    np.fill_diagonal(L,1)
 
     for j in range(n):
         for i in range(j+1):
@@ -38,15 +39,19 @@ def lu_factorisation(A):
                 U[i,j]= A[i,j]
                 factor =U[i,i]
             elif (i<=j):
-                U[i,i] = A[i,i] - L[i,j-1] * U[j-1,i]
+                U[i,j] = A[i,i] - L[i,j-1] * U[j-1,i]
                 factor= U[i][i]
 
         for i in range(j+1, n):
             L[i,j]= A[i,j]/factor
 
-    return L, U 
+    #return L, U 
+    #print(L,"\n",U)
+    print(f"L =\n {L}")
+    print("\n")
+    print(f"U =\n {U}")
 
 
 A=np.array([[4,2,0],[2,3,1],[0, 1, 2.5]])
 
-print(lu_factorisation(A))
+lu_factorisation(A)
