@@ -1,5 +1,4 @@
 import numpy as np
-
 def gramSchmidt(A):
     n, m = A.shape
     Q = np.zeros((n, m))
