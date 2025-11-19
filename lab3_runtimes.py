@@ -78,56 +78,6 @@ def lu_factorisation(A):
 
     return L, U 
 
-def forward_solve(A,b):
-    n = system_size(A, b)
-
-    # check is lower triangular
-    if not np.allclose(A, np.tril(A)):
-        raise ValueError("Matrix A is not lower triangular")
-
-    # create solution variable
-    x = np.empty_like(b)
-
-    # perform forwards solve
-    for i in range(n):
-        partial_sum = 0.0
-        for j in range(0, i):
-            partial_sum += A[i, j] * x[j]
-        x[i] = 1.0 / A[i, i] * (b[i] - partial_sum)
-
-    return x
-
-def backward_solve(A,b):
-    n = system_size(A, b)
-
-    # check is upper triangular
-    assert np.allclose(A, np.triu(A))
-
-    # create solution variable
-    x = np.empty_like(b)
-
-    # perform backwards solve
-    for i in range(n - 1, -1, -1):  # iterate over rows backwards
-        partial_sum = 0.0
-        for j in range(i + 1, n):
-            partial_sum += A[i, j] * x[j]
-        x[i] = 1.0 / A[i, i] * (b[i] - partial_sum)
-
-    return x
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # GAUSSIAN!!!!!!!!!!!!!!!!!
 def system_size(A, b):
     """
@@ -264,25 +214,32 @@ def gaussian_elimination(A, b, verbose=False):
 
 sizes = [2**j for j in range(1, 6)]
 print(sizes)
+gauss_times = []
+lu_times = []
 
 for n in sizes:
     # generate a random system of linear equations of size n
     A, b, x = generate_safe_system(n)
 
     # do the solve
-    t0 = time.time()
-    L, U = lu_factorisation(A)
-    y = forward_solve(L, b)
-    x_lu = backward_solve(U, y)
-    t1 = time.time()
-    lu_time = t1 - t0
+    start = time.time()
+    gaussian_elimination(A, b)
+    gauss_times.append(time.time() - start)
 
-    # --- Gaussian elimination ---
-    t0 = time.time()
-    x_gauss = gaussian_elimination(A, b)
-    t1 = time.time()
-    gauss_time = t1 - t0
+    
+    start = time.time()
+    lu_factorisation(A)
+    lu_times.append(time.time() - start)
 
-    print(f"n={n:3d},  LU time = {lu_time:.6f},  Gaussian time = {gauss_time:.6f}")
-    plt.plot(n,lu_time)
-    plt.show()
+plt.figure(figsize=(10, 6))
+plt.plot(sizes, gauss_times, marker='o', label='gaussian elimination')
+plt.plot(sizes, lu_times, marker='s', label='LU factorisation')
+
+plt.xlabel("Matrix Size (n)")
+plt.ylabel("Runtime (seconds)")
+plt.title("Runtime Comparison: LU vs Gaussian Elimination")
+plt.legend()
+plt.grid(True)
+
+plt.tight_layout()
+plt.show()
