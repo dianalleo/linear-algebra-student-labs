@@ -1,5 +1,8 @@
+#RUNTIMES
 import numpy as np
 from scipy.sparse import diags
+import time
+import matplotlib.pyplot as plt
 
 def generate_safe_system(n):
     """
@@ -74,42 +77,45 @@ def lu_factorisation(A):
             L[i,j]= A[i,j]/factor
 
     return L, U 
-    #print(L,"\n",U)
-    #print(f"L =\n {L}")
-    #print("\n")
-    #print(f"U =\n {U}")
 
+def forward_solve(A,b):
+    n = system_size(A, b)
 
-A=np.array([[4,2,0],[2,3,1],[0, 1, 2.5]])
+    # check is lower triangular
+    if not np.allclose(A, np.tril(A)):
+        raise ValueError("Matrix A is not lower triangular")
 
-print(lu_factorisation(A))
+    # create solution variable
+    x = np.empty_like(b)
 
-#det:
-def determinant(A):
-    n = A.shape[0]
-    L, U = lu_factorisation(A)
-
-    det_L = 1.0
-    det_U = 1.0
-
+    # perform forwards solve
     for i in range(n):
-        det_L *= L[i, i]
-        det_U *= U[i, i]
+        partial_sum = 0.0
+        for j in range(0, i):
+            partial_sum += A[i, j] * x[j]
+        x[i] = 1.0 / A[i, i] * (b[i] - partial_sum)
 
-    return det_L * det_U
+    return x
 
-A_large, b_large, x_large = generate_safe_system(100)
-det = determinant(A_large)
-print(f"det is {det}")
+def backward_solve(A,b):
+    n = system_size(A, b)
 
-#RUNTIMES
-sizes = [2**j for j in range(1, 6)]
+    # check is upper triangular
+    assert np.allclose(A, np.triu(A))
 
-for n in sizes:
-    # generate a random system of linear equations of size n
-    A, b, x = generate_safe_system(n)
+    # create solution variable
+    x = np.empty_like(b)
 
-    # do the solve
+    # perform backwards solve
+    for i in range(n - 1, -1, -1):  # iterate over rows backwards
+        partial_sum = 0.0
+        for j in range(i + 1, n):
+            partial_sum += A[i, j] * x[j]
+        x[i] = 1.0 / A[i, i] * (b[i] - partial_sum)
+
+    return x
+
+
 
 
 
@@ -256,3 +262,27 @@ def gaussian_elimination(A, b, verbose=False):
             print()
 #gaussian_elimination(A)
 
+sizes = [2**j for j in range(1, 6)]
+print(sizes)
+
+for n in sizes:
+    # generate a random system of linear equations of size n
+    A, b, x = generate_safe_system(n)
+
+    # do the solve
+    t0 = time.time()
+    L, U = lu_factorisation(A)
+    y = forward_solve(L, b)
+    x_lu = backward_solve(U, y)
+    t1 = time.time()
+    lu_time = t1 - t0
+
+    # --- Gaussian elimination ---
+    t0 = time.time()
+    x_gauss = gaussian_elimination(A, b)
+    t1 = time.time()
+    gauss_time = t1 - t0
+
+    print(f"n={n:3d},  LU time = {lu_time:.6f},  Gaussian time = {gauss_time:.6f}")
+    plt.plot(n,lu_time)
+    plt.show()
