@@ -45,3 +45,7 @@ def lu_factorisation(A):
     
     L[0, 0] = 1
     U[0, 0] = 1
+
+def det(A):
+    L, U = lu_factorisation(A)
+    return np.prod(np.diag(U))
