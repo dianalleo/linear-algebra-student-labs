@@ -23,13 +23,25 @@ def lu_factorisation(A):
     U : numpy.ndarray
         An upper triangular matrix with shape ``(n, n)``.
     """
-    n, m = A.shape
-    if n != m:
-        raise ValueError(f"Matrix A is not square {A.shape=}")
+    
+    #get num rows:
+    n = A.shape[0]
+    
+    U = A.copy()
+    L = np.eye(n, dtype=np.double)
+    
+    for i in range(n):
 
-    # construct arrays of zeros
+    # row ops on U below i and reverse row ops for L
+        factor = U[i+1:, i] / U[i, i]
+        L[i+1:, i] = factor
+        U[i+1:] -= factor[:, np.newaxis] * U[i]
+        
+    return L, U
+
+    #arrays of zeros
     L, U = np.zeros_like(A), np.zeros_like(A)
 
-    # ...
+    
     L[0, 0] = 1
     U[0, 0] = 1
